@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  text-align: left;
 }
 
 .logo {
@@ -39,4 +39,45 @@
 
 .read-the-docs {
   color: #888;
+}
+
+.page-center {
+  min-height: 70vh;           
+  display: flex;
+  flex-direction: column;
+  justify-content: center;     
+  align-items: center;        
+  text-align: center;
+}
+
+.home-hero {
+  min-height: 80vh;          
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;   
+  padding: 6rem 12%;         
+  text-align: left;
+}
+
+.home-hero h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.home-hero p {
+  max-width: 650px;
+  font-size: 2rem;
+  line-height: 1.6;
+  color: #444;
+}
+
+.home-hello {
+  font-size: 1.4rem;
+  margin-bottom: 2rem; /* space bewteen hello and intro*/
+}
+
+.home-intro {
+  max-width: 650px;
+  font-size: 3.2rem;  
+  line-height: 1.6;
 }
