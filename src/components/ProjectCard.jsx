@@ -1,16 +1,22 @@
-import { Card, Button } from "react-bootstrap";
+import { Card, Badge } from "react-bootstrap";
 
-export default function ProjectCard({ title, description, link }) {
+export default function ProjectCard({ title, role, timeframe, description, tags }) {
   return (
     <Card className="mb-4">
       <Card.Body>
         <Card.Title>{title}</Card.Title>
-        <Card.Text>{description}</Card.Text>
-        {link && (
-          <Button variant="dark" href={link} target="_blank" rel="noreferrer">
-            View Project
-          </Button>
+        {role && timeframe && (
+          <Card.Subtitle className="mb-2 text-muted">
+            {role} · {timeframe}
+          </Card.Subtitle>
         )}
+        <Card.Text>{description}</Card.Text>
+        {tags &&
+          tags.map((tag) => (
+            <Badge key={tag} bg="secondary" className="me-2">
+              {tag}
+            </Badge>
+          ))}
       </Card.Body>
     </Card>
   );
