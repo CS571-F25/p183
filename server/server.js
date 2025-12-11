@@ -189,17 +189,17 @@ app.get('/auth/callback', async (req, res) => {
   const { code, state, error } = req.query;
 
   if (error) {
-    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=${encodeURIComponent(error)}`);
+    return res.redirect(`${FRONTEND_URL}#/about?error=${encodeURIComponent(error)}`);
   }
 
   if (!code) {
-    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=no_code`);
+    return res.redirect(`${FRONTEND_URL}#/about?error=no_code`);
   }
 
   // Verify state parameter (CSRF protection)
   if (state !== tokenStore.state) {
     console.error('State mismatch - possible CSRF attack');
-    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=state_mismatch`);
+    return res.redirect(`${FRONTEND_URL}#/about?error=state_mismatch`);
   }
   
   // Clear state after use
@@ -223,7 +223,7 @@ app.get('/auth/callback', async (req, res) => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
       console.error('Token exchange error:', errorData);
-      return res.redirect(`${FRONTEND_URL}/p183/#/about?error=token_exchange_failed`);
+      return res.redirect(`${FRONTEND_URL}#/about?error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -238,10 +238,10 @@ app.get('/auth/callback', async (req, res) => {
     saveTokens(tokenStore);
 
     // Redirect back to frontend About page after successful auth (where Spotify section is)
-    res.redirect(`${FRONTEND_URL}/p183/#/about?auth=success`);
+    res.redirect(`${FRONTEND_URL}#/about?auth=success`);
   } catch (error) {
     console.error('Callback error:', error);
-    res.redirect(`${FRONTEND_URL}/p183/#/about?error=server_error`);
+    res.redirect(`${FRONTEND_URL}#/about?error=server_error`);
   }
 });
 
