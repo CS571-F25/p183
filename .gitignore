@@ -18,6 +18,7 @@ dist-ssr
 .env.*.local
 server/.env
 server/.spotify-tokens.json
+# Note: .env.production is committed (contains public backend URL, not secrets)
 
 # Editor directories and files
 .vscode/*

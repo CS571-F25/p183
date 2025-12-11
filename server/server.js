@@ -2,20 +2,29 @@
  * Spotify Backend Server
  * Handles Spotify OAuth Authorization Code Flow
  * 
- * ENVIRONMENT VARIABLES REQUIRED (in server/.env):
+ * ENVIRONMENT VARIABLES REQUIRED (in server/.env or deployment platform):
  * - SPOTIFY_CLIENT_ID: Your Spotify app client ID from https://developer.spotify.com/dashboard
  * - SPOTIFY_CLIENT_SECRET: Your Spotify app client secret
- * - SPOTIFY_REDIRECT_URI: Must be EXACTLY "http://127.0.0.1:3001/auth/callback" for local dev
- *   IMPORTANT: Spotify no longer allows localhost; use 127.0.0.1
- *   This exact URI must be added to your Spotify Dashboard → Redirect URIs
- * - FRONTEND_URL: Frontend URL (defaults to http://localhost:5173)
+ * - SPOTIFY_REDIRECT_URI: The callback URL for Spotify OAuth
+ *   - Local dev: "http://127.0.0.1:3001/auth/callback"
+ *   - Production: "https://YOUR-BACKEND-DOMAIN/auth/callback" (e.g., https://shivani-spotify-backend.onrender.com/auth/callback)
+ *   IMPORTANT: This exact URI must be added to your Spotify Dashboard → Redirect URIs
+ * - FRONTEND_URL: Frontend URL for post-auth redirect
+ *   - Local dev: "http://localhost:5173/p183/"
+ *   - Production: "https://cs571-f25.github.io/p183/"
  * - PORT: Server port (optional, defaults to 3001)
+ *   - Deployment platforms (Render, Railway, etc.) will set this automatically
  * 
  * SPOTIFY DASHBOARD SETUP:
  * 1. Go to https://developer.spotify.com/dashboard
  * 2. Click on your app
- * 3. Under "Redirect URIs", add: http://127.0.0.1:3001/auth/callback
+ * 3. Under "Redirect URIs", add BOTH:
+ *   - http://127.0.0.1:3001/auth/callback (for local dev)
+ *   - https://YOUR-BACKEND-DOMAIN/auth/callback (for production - replace with your actual backend URL)
  * 4. Save changes
+ * 
+ * NOTE: SPOTIFY_REDIRECT_URI in your backend environment must EXACTLY match one of the URIs
+ * in your Spotify Dashboard. The backend will use this value when building the authorization URL.
  */
 
 import express from 'express';
@@ -37,10 +46,38 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS configuration - allow requests from frontend
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
+// In development: allows localhost and 127.0.0.1
+// In production: allows GitHub Pages origin
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://cs571-f25.github.io",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // In production, also check if it matches FRONTEND_URL from env
+        const frontendUrl = process.env.FRONTEND_URL;
+        if (frontendUrl && origin.startsWith(frontendUrl)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -152,17 +189,17 @@ app.get('/auth/callback', async (req, res) => {
   const { code, state, error } = req.query;
 
   if (error) {
-    return res.redirect(`${FRONTEND_URL}/p183/#/now?error=${encodeURIComponent(error)}`);
+    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=${encodeURIComponent(error)}`);
   }
 
   if (!code) {
-    return res.redirect(`${FRONTEND_URL}/p183/#/now?error=no_code`);
+    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=no_code`);
   }
 
   // Verify state parameter (CSRF protection)
   if (state !== tokenStore.state) {
     console.error('State mismatch - possible CSRF attack');
-    return res.redirect(`${FRONTEND_URL}/p183/#/now?error=state_mismatch`);
+    return res.redirect(`${FRONTEND_URL}/p183/#/about?error=state_mismatch`);
   }
   
   // Clear state after use
@@ -186,7 +223,7 @@ app.get('/auth/callback', async (req, res) => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
       console.error('Token exchange error:', errorData);
-      return res.redirect(`${FRONTEND_URL}/p183/#/now?error=token_exchange_failed`);
+      return res.redirect(`${FRONTEND_URL}/p183/#/about?error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -200,11 +237,11 @@ app.get('/auth/callback', async (req, res) => {
     };
     saveTokens(tokenStore);
 
-    // Redirect back to frontend Home page after successful auth
-    res.redirect(`${FRONTEND_URL}/p183/#/?auth=success`);
+    // Redirect back to frontend About page after successful auth (where Spotify section is)
+    res.redirect(`${FRONTEND_URL}/p183/#/about?auth=success`);
   } catch (error) {
     console.error('Callback error:', error);
-    res.redirect(`${FRONTEND_URL}/p183/#/now?error=server_error`);
+    res.redirect(`${FRONTEND_URL}/p183/#/about?error=server_error`);
   }
 });
 

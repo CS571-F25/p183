@@ -15,21 +15,30 @@ export function useSpotify() {
 
   // Automatically fetch data on mount and handle auth callback
   useEffect(() => {
-    // Check for auth callback in URL
-    const params = new URLSearchParams(window.location.search);
-    const authStatus = params.get('auth');
+    // Check for auth callback in URL (HashRouter puts query params in hash)
+    const hash = window.location.hash;
+    const hashParts = hash.split('?');
+    let authStatus = null;
+    let error = null;
+    
+    if (hashParts.length > 1) {
+      const params = new URLSearchParams(hashParts[1]);
+      authStatus = params.get('auth');
+      error = params.get('error');
+    }
     
     if (authStatus === 'success') {
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      // Clean up URL (remove ?auth=success from hash)
+      const cleanHash = hashParts[0];
+      window.history.replaceState({}, document.title, window.location.pathname + cleanHash);
       // Check auth status and fetch data
       checkAuthStatus();
-    } else if (authStatus === 'error') {
-      const error = params.get('error');
+    } else if (authStatus === 'error' || error) {
       setError(`Authentication failed: ${error || 'Unknown error'}`);
       setIsLoading(false);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      // Clean up URL (remove ?error=... from hash)
+      const cleanHash = hashParts[0];
+      window.history.replaceState({}, document.title, window.location.pathname + cleanHash);
     } else {
       // Normal load - check auth status
       checkAuthStatus();
