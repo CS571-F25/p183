@@ -54,30 +54,106 @@
   min-height: 80vh;          
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;   
-  padding: 6rem 12%;         
-  text-align: left;
+  justify-content: center;   
+  padding: 6rem 2rem;
+  background-color: var(--color-bg);
 }
 
-.home-hero h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+/* Avatar alignment - tighter with content */
+.home-hero .avatar {
+  margin: 0 auto;
 }
 
-.home-hero p {
-  max-width: 650px;
-  font-size: 2rem;
-  line-height: 1.6;
-  color: #444;
+@media (min-width: 992px) {
+  .home-hero .avatar {
+    margin: 0;
+  }
+}
+
+.home-title {
+  font-size: clamp(2.8rem, 4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
 }
 
 .home-hello {
-  font-size: 1.4rem;
-  margin-bottom: 2rem; /* space bewteen hello and intro*/
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Ensure home text is visible in dark mode with proper contrast */
+[data-theme="dark"] .home-hello {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+[data-theme="dark"] .home-title {
+  color: var(--text-primary) !important;
+  opacity: 1;
+}
+
+[data-theme="dark"] .home-intro {
+  color: var(--text-primary) !important;
+  opacity: 1;
+}
+
+[data-theme="dark"] .home-subtitle {
+  color: var(--text-secondary);
+  opacity: 1;
 }
 
 .home-intro {
-  max-width: 650px;
-  font-size: 3.2rem;  
+  font-size: 1.5rem;  
+  line-height: 1.7;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.home-subtitle {
+  font-size: 1.2rem;
   line-height: 1.6;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+/* Accessibility: Focus styles */
+*:focus-visible {
+  outline: 3px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+/* Skip link styling */
+.skip-link:focus {
+  top: 0 !important;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .home-hero {
+    padding: 4rem 1.5rem;
+    min-height: 70vh;
+  }
+
+  .home-title {
+    font-size: 2.5rem;
+  }
+
+  .home-intro {
+    font-size: 1.3rem;
+  }
+
+  .home-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .home-avatar.avatar-large {
+    width: 200px;
+    height: 200px;
+    max-width: 60%;
+    aspect-ratio: 1 / 1; /* Maintain perfect circle on mobile */
+  }
 }

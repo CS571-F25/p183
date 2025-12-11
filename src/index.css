@@ -3,35 +3,143 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+/* Light theme (default) - clean white look */
+:root,
+[data-theme="light"] {
+  --color-bg: #f7f7fb;
+  --color-surface: #ffffff;
+  --color-text: #111118;
+  --color-muted-text: #6c757d;
+  --accent-blue: #3B82F6;
+  --accent-orange: #F97316;
+  --color-accent: var(--accent-blue);
+  --color-border-subtle: #e0e0ea;
+  
+  /* Legacy variable names for compatibility */
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-surface);
+  --bg-secondary: #f8f9fa;
+  --surface-color: var(--color-surface);
+  --text: var(--color-text);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-muted-text);
+  --text-muted: var(--color-muted-text);
+  --muted-text: var(--color-muted-text);
+  --muted-text-color: var(--color-muted-text);
+  --border: var(--color-border-subtle);
+  --border-color: var(--color-border-subtle);
+  --primary: var(--color-accent);
+  --primary-hover: #3d5eff;
+  --link-color: var(--color-accent);
+  --link-hover: #3d5eff;
+  --link-active: #2d4dff;
+  --card-bg: var(--color-surface);
+  --input-bg: var(--color-surface);
+  --input-border: #ced4da;
+  --accent-color: var(--color-accent);
+  --accent-hover: #3d5eff;
+  --nav-hover-bg: rgba(76, 111, 255, 0.1);
+  --nav-active-color: #2d4dff;
 }
-a:hover {
-  color: #535bf2;
+
+/* Dark theme - consistently dark, no white sections */
+[data-theme="dark"] {
+  --color-bg: #050509;
+  --color-surface: #11111a;
+  --color-text: #f8f8ff;
+  --color-muted-text: #b0b3c5;
+  --accent-blue: #3B82F6;
+  --accent-orange: #F97316;
+  --color-accent: var(--accent-blue);
+  --color-border-subtle: #303040;
+  
+  /* Legacy variable names for compatibility */
+  --bg: var(--color-bg);
+  --bg-elevated: var(--color-surface);
+  --bg-secondary: var(--color-surface);
+  --surface-color: var(--color-surface);
+  --text: var(--color-text);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-muted-text);
+  --text-muted: var(--color-muted-text);
+  --muted-text: var(--color-muted-text);
+  --muted-text-color: var(--color-muted-text);
+  --border: var(--color-border-subtle);
+  --border-color: var(--color-border-subtle);
+  --primary: var(--color-accent);
+  --primary-hover: #6b7fff;
+  --link-color: var(--color-accent);
+  --link-hover: #6b7fff;
+  --link-active: #7d8fff;
+  --card-bg: var(--color-surface);
+  --input-bg: #1a1a24;
+  --input-border: var(--color-border-subtle);
+  --accent-color: var(--color-accent);
+  --accent-hover: #6b7fff;
+  --nav-hover-bg: rgba(76, 111, 255, 0.15);
+  --nav-active-color: #7d8fff;
+}
+
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 body {
+  height: 100%;
   margin: 0;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  display: block; 
+  display: block;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  height: 100%;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+main {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: calc(100vh - 200px);
+}
+
+a {
+  font-weight: 500;
+  color: var(--link-color);
+  text-decoration: inherit;
+}
+a:hover {
+  color: var(--link-hover);
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: var(--text-primary);
+}
+
+h2 {
+  color: var(--text-primary);
+}
+
+h3 {
+  color: var(--text-primary);
 }
 
 button {
@@ -41,27 +149,665 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
+  transition: border-color 0.25s, background-color 0.25s;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Card styling - consistent for both themes */
+.card {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text);
+  border-radius: 8px;
+}
+
+.card-header {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text);
+}
+
+.card-body {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.card-title,
+.card-text {
+  color: var(--color-text);
+}
+
+/* Ensure Bootstrap components respect theme */
+[data-theme="dark"] .card {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border-subtle) !important;
+  color: var(--color-text) !important;
+  border-radius: 8px;
+}
+
+[data-theme="dark"] .card-header {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border-subtle) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .card-body {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .card-text {
+  color: var(--color-text) !important;
+}
+
+/* Project card styling - minimal hover like Kyan's site */
+.project-card-link {
+  color: inherit;
+  display: block;
+}
+
+.project-card-clickable {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+}
+
+.project-card-clickable:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
+}
+
+.project-card-clickable:focus-within {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.project-card-image-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.project-card-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+[data-theme="dark"] .form-control {
+  background-color: var(--input-bg) !important;
+  border-color: var(--border-color) !important;
+  border-width: 2px !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: var(--muted-text-color) !important;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .form-control:focus {
+  background-color: var(--input-bg) !important;
+  border-color: var(--link-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(124, 131, 253, 0.25);
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .form-label {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure all sections have dark backgrounds */
+[data-theme="dark"] section {
+  background-color: transparent;
+}
+
+[data-theme="dark"] header {
+  background-color: transparent;
+}
+
+/* Contact form - ensure visibility in dark mode */
+[data-theme="dark"] .form-control:not(:focus) {
+  border: 2px solid var(--input-border) !important;
+}
+
+[data-theme="dark"] .form-control.is-invalid {
+  border-color: #dc3545 !important;
+  background-color: var(--input-bg) !important;
+}
+
+[data-theme="dark"] .form-control.is-valid {
+  border-color: #198754 !important;
+  background-color: var(--input-bg) !important;
+}
+
+/* Bootstrap text utilities - dark theme overrides */
+[data-theme="dark"] .lead {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .small {
+  color: var(--text-secondary);
+}
+
+/* Bootstrap button overrides for dark theme */
+[data-theme="dark"] .btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: white;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--border-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-link {
+  color: var(--link-color);
+}
+
+[data-theme="dark"] .btn-link:hover {
+  color: var(--link-hover);
+}
+
+/* Badge colors in dark theme */
+[data-theme="dark"] .badge {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .badge.bg-secondary {
+  background-color: var(--border-color) !important;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .badge.bg-primary {
+  background-color: var(--accent-color) !important;
+  color: white;
+}
+
+[data-theme="dark"] .badge.bg-success {
+  background-color: rgba(25, 135, 84, 0.8) !important;
+  color: white;
+}
+
+[data-theme="dark"] .badge.bg-info {
+  background-color: rgba(13, 202, 240, 0.8) !important;
+  color: white;
+}
+
+/* Navbar styling - ensure consistent dark background */
+.navbar-custom {
+  background-color: var(--color-bg) !important;
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .navbar-custom {
+  background-color: var(--color-bg) !important;
+}
+
+[data-theme="dark"] .navbar {
+  background-color: var(--color-bg) !important;
+}
+
+.navbar-brand-custom {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.navbar-brand-custom:hover,
+.navbar-brand-custom:focus {
+  color: var(--link-color) !important;
+}
+
+/* Navigation link styling - minimal hover effects like Kyan's site */
+.nav-custom .nav-link-custom {
+  color: var(--color-muted-text) !important;
+  font-weight: 400;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  transition: color 0.15s ease;
+  position: relative;
+  text-decoration: none;
+}
+
+.nav-custom .nav-link-custom:hover {
+  color: var(--color-text) !important;
+}
+
+.nav-custom .nav-link-custom:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Active route styling */
+.nav-custom .nav-link-custom.active {
+  color: var(--color-text) !important;
+  font-weight: 500;
+}
+
+.nav-custom .nav-link-custom.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 1rem;
+  right: 1rem;
+  height: 1px;
+  background-color: var(--accent-blue);
+}
+
+/* Avatar component styling */
+.avatar {
+  display: inline-block;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  position: relative;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1; /* Ensure perfect circle */
+}
+
+.avatar-small {
+  width: 80px;
+  height: 80px;
+}
+
+.avatar-medium {
+  width: 150px;
+  height: 150px;
+}
+
+.avatar-large {
+  width: 280px;
+  height: 280px;
+}
+
+/* Home hero avatar - larger size, maintain circle on all screens */
+.home-avatar.avatar-large {
+  width: 280px;
+  height: 280px;
+  max-width: 60%;
+  aspect-ratio: 1 / 1; /* Force perfect circle even with max-width */
+}
+
+.avatar-border {
+  border: 4px solid white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+[data-theme="dark"] .avatar-border {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-color: white;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--link-color) 0%, var(--link-hover) 100%);
+  opacity: 0.3;
+}
+
+[data-theme="dark"] .avatar-placeholder {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  opacity: 0.4;
+}
+
+/* Footer styling */
+.site-footer {
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border-subtle);
+  margin-top: auto;
+}
+
+[data-theme="dark"] .site-footer {
+  background-color: var(--color-bg) !important;
+  border-top-color: var(--color-border-subtle) !important;
+}
+
+.social-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.social-link:hover,
+.social-link:focus {
+  color: var(--link-color);
+  transform: scale(1.05);
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.social-link:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+/* Button hover effects - minimal like Kyan's site */
+.btn-custom-primary {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+  transition: opacity 0.15s ease;
+}
+
+.btn-custom-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-custom-primary:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.btn-custom-outline {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-custom-outline:hover {
+  background-color: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+  opacity: 0.95;
+}
+
+.btn-custom-outline:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Hero section buttons - clean primary + outline styles */
+.btn-hero-primary {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  border: none;
+}
+
+.btn-hero-primary:hover {
+  opacity: 0.9;
+  background-color: #2563eb; /* Slightly darker blue */
+}
+
+.btn-hero-primary:focus,
+.btn-hero-primary:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.btn-hero-primary:active {
+  opacity: 0.85;
+}
+
+.btn-hero-outline {
+  background-color: transparent;
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  transition: all 0.15s ease;
+}
+
+.btn-hero-outline:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.btn-hero-outline:focus,
+.btn-hero-outline:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.btn-hero-outline:active {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.btn-resume {
+  transition: opacity 0.15s ease;
+}
+
+.btn-resume:hover {
+  opacity: 0.9;
+}
+
+.btn-resume:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.theme-toggle-btn {
+  transition: opacity 0.15s ease;
+  border-radius: 6px;
+}
+
+.theme-toggle-btn:hover {
+  opacity: 0.9;
+}
+
+.theme-toggle-btn:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Spotify components styling */
+.spotify-now-playing {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+.spotify-album-art {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.spotify-album-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotify-album-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  opacity: 0.3;
+}
+
+.spotify-icon {
+  font-size: 2rem;
+  color: var(--text-secondary);
+}
+
+.spotify-playing-indicator {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.spotify-pulse {
+  width: 4px;
+  height: 12px;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+  animation: spotify-pulse 1.2s ease-in-out infinite;
+}
+
+.spotify-pulse:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.spotify-pulse:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes spotify-pulse {
+  0%, 100% {
+    transform: scaleY(0.5);
+    opacity: 0.7;
   }
-  a:hover {
-    color: #747bff;
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
   }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+.spotify-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.spotify-progress-fill {
+  height: 100%;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.spotify-top-tracks {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+.spotify-tracks-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.spotify-track-row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  gap: 1rem;
+}
+
+.spotify-track-row:hover,
+.spotify-track-row:focus {
+  background-color: var(--nav-hover-bg);
+  outline: none;
+}
+
+.spotify-track-row:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: -2px;
+}
+
+.spotify-track-row:last-child {
+  border-bottom: none;
+}
+
+.spotify-track-rank {
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 30px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.spotify-track-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.spotify-track-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-track-artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-track-album {
+  min-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-track-duration {
+  min-width: 50px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
