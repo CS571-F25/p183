@@ -3,9 +3,9 @@ import { Container } from "react-bootstrap";
 import ProjectCard from "./ProjectCard.jsx";
 import RoleFilter from "./RoleFilter.jsx";
 import reactLogo from "../assets/react.svg";
-// Import WCV project screenshots - using URL constructor for files with spaces
-const wcvScreenshot1 = new URL("../assets/Screenshot 2025-12-11 at 12.59.34 AM.png", import.meta.url).href;
-const wcvScreenshot2 = new URL("../assets/Screenshot 2025-12-11 at 12.59.45 AM.png", import.meta.url).href;
+// WCV project screenshots - using public folder for files with spaces
+const wcvScreenshot1 = "/p183/Screenshot 2025-12-11 at 12.59.34 AM.png";
+const wcvScreenshot2 = "/p183/Screenshot 2025-12-11 at 12.59.45 AM.png";
 
 /**
  * Work items with role focus tags

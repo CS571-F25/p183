@@ -64,6 +64,11 @@ export function useSpotify() {
         setError('Authentication expired. Please reconnect.');
         setIsLoading(false);
         return;
+      } else if (nowPlayingResponse.status === 502 || nowPlayingResponse.status === 504 || nowPlayingResponse.status === 402) {
+        // Service is sleeping (Render free tier) - silently fail, keep existing data
+        console.log('Backend service is sleeping, keeping existing data');
+        setIsLoading(false);
+        return;
       }
 
       // Fetch top tracks
@@ -77,6 +82,11 @@ export function useSpotify() {
       } else if (topTracksResponse.status === 401) {
         setIsAuthenticated(false);
         setError('Authentication expired. Please reconnect.');
+        setIsLoading(false);
+        return;
+      } else if (topTracksResponse.status === 502 || topTracksResponse.status === 504 || topTracksResponse.status === 402) {
+        // Service is sleeping - silently fail, keep existing data
+        console.log('Backend service is sleeping, keeping existing data');
         setIsLoading(false);
         return;
       }
@@ -95,10 +105,21 @@ export function useSpotify() {
       } else if (recentlyPlayedResponse.status === 401) {
         setIsAuthenticated(false);
         setError('Authentication expired. Please reconnect.');
+      } else if (recentlyPlayedResponse.status === 502 || recentlyPlayedResponse.status === 504 || recentlyPlayedResponse.status === 402) {
+        // Service is sleeping - silently fail, keep existing data
+        console.log('Backend service is sleeping, keeping existing data');
       }
       // Don't throw error for recently played - it's optional
     } catch (err) {
       console.error('Error fetching Spotify data:', err);
+      
+      // Network errors (service sleeping) - don't show error, keep existing data
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        console.log('Backend service unavailable, keeping existing data');
+        setIsLoading(false);
+        return;
+      }
+      
       setError(err.message);
       
       if (err.message.includes('401') || err.message.includes('expired')) {

@@ -408,7 +408,7 @@ app.post('/contact/send', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    const recipientEmail = 'spotnuru@wisc.edu';
+    const recipientEmail = 'shivanipotnuru@gmail.com';
     
     // Log the submission (for development)
     console.log('📧 Contact Form Submission:');
@@ -418,27 +418,34 @@ app.post('/contact/send', async (req, res) => {
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log('---');
 
-    // TODO: Uncomment and configure email service
-    // Example with nodemailer:
-    /*
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE || 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+    // Send email using nodemailer (if configured)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+      try {
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.default.createTransport({
+          service: process.env.EMAIL_SERVICE || 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+          },
+        });
 
-    await transporter.sendMail({
-      from: `"${name}" <${email}>`,
-      to: recipientEmail,
-      replyTo: email,
-      subject: `Contact Form: Message from ${name}`,
-      text: message,
-      html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
-    });
-    */
+        await transporter.sendMail({
+          from: `"${name}" <${process.env.EMAIL_USER}>`,
+          to: recipientEmail,
+          replyTo: email,
+          subject: `Contact Form: Message from ${name}`,
+          text: message,
+          html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
+        });
+        console.log('✅ Email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Email sending failed:', emailError);
+        // Don't fail the request if email fails - still log to console
+      }
+    } else {
+      console.log('ℹ️  Email not configured - submission logged to console only');
+    }
 
     res.json({ 
       success: true, 
