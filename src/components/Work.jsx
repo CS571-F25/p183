@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { Container } from "react-bootstrap";
 import ProjectCard from "./ProjectCard.jsx";
 import RoleFilter from "./RoleFilter.jsx";
-import reactLogo from "../assets/react.svg";
 // WCV project screenshots - using public folder for files with spaces
 const wcvScreenshot1 = "/p183/Screenshot 2025-12-11 at 12.59.34 AM.png";
 const wcvScreenshot2 = "/p183/Screenshot 2025-12-11 at 12.59.45 AM.png";
@@ -32,8 +31,6 @@ const workItems = [
       "Built Tableau dashboards to visualize adverse events across clinical trials, helping pharma stakeholders monitor safety signals. Created interactive visualizations that enable real-time monitoring of safety data across multiple studies, supporting data-driven decision making in drug development.",
     tags: ["Data Science", "Tableau", "Clinical Data", "Data Visualization"],
     roleFocus: ["data-science"],
-    imageSrc: reactLogo,
-    imageAlt: "Safety insights dashboards",
   },
   {
     title: "Spectacle Health – Plan Guide Chatbot",
@@ -43,8 +40,6 @@ const workItems = [
       "Built an AI-powered chatbot prototype that helps older adults compare Medicare and Marketplace plans. Used vector databases and embeddings to answer natural language questions about coverage and costs. Focused on making complex insurance information more approachable.",
     tags: ["Data Science", "GenAI", "UI/UX"],
     roleFocus: ["data-science", "ui-ux"],
-    imageSrc: reactLogo,
-    imageAlt: "Spectacle Health plan guide chatbot",
     externalLink: "https://example.org/spectacle-health",
   },
   {
@@ -56,8 +51,6 @@ const workItems = [
     tags: ["HCI Research", "Qualitative Analysis", "Thematic Analysis", "Research"],
     roleFocus: ["ui-ux"],
     externalLink: "https://dl.acm.org/doi/10.1145/3710972",
-    imageSrc: reactLogo,
-    imageAlt: "Communal gratitude research",
   },
   {
     title: "Biokind Analytics Data Dashboards",
@@ -67,8 +60,6 @@ const workItems = [
       "Work with public data APIs and dashboards to benchmark Dane County against peer counties, creating visualizations that help identify trends and opportunities in public health and county-level data. Built interactive dashboards that support evidence-based decision making for public health initiatives.",
     tags: ["Data Science", "Public Health", "County Data", "Data Analysis"],
     roleFocus: ["data-science"],
-    imageSrc: reactLogo,
-    imageAlt: "Biokind analytics dashboards",
   },
   {
     title: "Personal Portfolio Website",
@@ -78,8 +69,6 @@ const workItems = [
       "Designed and developed this responsive personal website using React, React Router, and React Bootstrap. Focused on creating an accessible, mobile-friendly experience with dark/light theme support, interactive components, and real-time Spotify integration.",
     tags: ["React", "React Router", "React Bootstrap", "Accessibility", "UI/UX"],
     roleFocus: ["ui-ux"],
-    imageSrc: reactLogo,
-    imageAlt: "Portfolio website",
   },
 ];
 
