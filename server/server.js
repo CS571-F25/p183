@@ -424,10 +424,16 @@ app.post('/contact/send', async (req, res) => {
         const nodemailer = await import('nodemailer');
         const transporter = nodemailer.default.createTransport({
           service: process.env.EMAIL_SERVICE || 'gmail',
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false, // true for 465, false for other ports
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASSWORD,
           },
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
         });
 
         await transporter.sendMail({
