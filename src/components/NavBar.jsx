@@ -41,13 +41,6 @@ export default function NavBar() {
             </Nav.Link>
             <Nav.Link 
               as={NavLink} 
-              to="/now"
-              className="nav-link-custom"
-            >
-              Now
-            </Nav.Link>
-            <Nav.Link 
-              as={NavLink} 
               to="/contact"
               className="nav-link-custom"
             >
@@ -57,16 +50,6 @@ export default function NavBar() {
 
           <div className="d-flex align-items-center">
             <ThemeToggle />
-            <Button
-              variant="dark"
-              href={`${import.meta.env.BASE_URL}resume.pdf`}
-              target="_blank"
-              rel="noreferrer"
-              className="ms-2 btn-resume"
-              aria-label="View resume PDF in new tab"
-            >
-              View Resume
-            </Button>
           </div>
         </Navbar.Collapse>
       </Container>

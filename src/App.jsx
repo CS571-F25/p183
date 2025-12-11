@@ -6,7 +6,6 @@ import NavBar from "./components/NavBar.jsx";
 import Home from "./components/Home.jsx";
 import AboutMe from "./components/AboutMe.jsx";
 import Work from "./components/Work.jsx";
-import Now from "./components/Now.jsx";
 import Contact from "./components/Contact.jsx";
 import Footer from "./components/Footer.jsx";
 
@@ -23,7 +22,6 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<AboutMe />} />
             <Route path="/work" element={<Work />} />
-            <Route path="/now" element={<Now />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>
         </main>

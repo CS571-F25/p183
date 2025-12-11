@@ -52,7 +52,7 @@ export default function Footer() {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="social-link"
+                    className="social-link-footer"
                     aria-label={`Shivani's ${link.name} profile`}
                   >
                     {link.icon}

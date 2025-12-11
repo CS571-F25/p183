@@ -8,16 +8,34 @@ import { Card, Badge, Button } from "react-bootstrap";
 export default function ProjectCard({ title, role, timeframe, description, tags, externalLink, imageSrc, imageAlt }) {
   const cardId = `project-${title.replace(/\s+/g, '-').toLowerCase()}`;
   
+  // Handle both single image and array of images
+  const images = Array.isArray(imageSrc) ? imageSrc : (imageSrc ? [imageSrc] : []);
+  const altTexts = Array.isArray(imageAlt) ? imageAlt : (imageAlt ? [imageAlt] : []);
+  
   const cardContent = (
     <Card.Body>
-      {imageSrc && (
+      {images.length > 0 && (
         <div className="mb-3 project-card-image-wrapper">
-          <img
-            src={imageSrc}
-            alt={imageAlt || `${title} thumbnail`}
-            className="project-card-image"
-            loading="lazy"
-          />
+          {images.length === 1 ? (
+            <img
+              src={images[0]}
+              alt={altTexts[0] || `${title} thumbnail`}
+              className="project-card-image"
+              loading="lazy"
+            />
+          ) : (
+            <div className="project-card-image-gallery">
+              {images.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={altTexts[index] || `${title} screenshot ${index + 1}`}
+                  className="project-card-image"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
       <Card.Title as="h3" id={cardId} className="d-flex align-items-center gap-2">

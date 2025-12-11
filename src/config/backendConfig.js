@@ -17,6 +17,8 @@ export const API_ENDPOINTS = {
   status: `${BACKEND_URL}/auth/status`,
   logout: `${BACKEND_URL}/auth/logout`,
   nowPlaying: `${BACKEND_URL}/spotify/now-playing`,
-  topTracks: `${BACKEND_URL}/spotify/top-tracks`,
+  topTracks: `${BACKEND_URL}/spotify/top-tracks?time_range=short_term&limit=5`,
+  recentlyPlayed: `${BACKEND_URL}/spotify/recently-played?limit=1`,
+  contact: `${BACKEND_URL}/contact/send`,
 };
 

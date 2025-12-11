@@ -21,9 +21,17 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 // fetch is built-in in Node 18+, no import needed
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const TOKEN_FILE = path.join(__dirname, '.spotify-tokens.json');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,14 +44,46 @@ app.use(cors({
 
 app.use(express.json());
 
-// In-memory token storage (for this project, single-user is fine)
-// In production, you'd use a database
+// Token storage - loads from file on startup, saves to file on update
+// This allows tokens to persist across server restarts (like Kyan's implementation)
+function loadTokens() {
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const data = fs.readFileSync(TOKEN_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading tokens:', error);
+  }
+  return {
+    accessToken: null,
+    refreshToken: null,
+    expiresAt: null,
+  };
+}
+
+function saveTokens(tokens) {
+  try {
+    // Don't save state to file (it's only for CSRF protection)
+    const { state, ...tokensToSave } = tokens;
+    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokensToSave, null, 2));
+  } catch (error) {
+    console.error('Error saving tokens:', error);
+  }
+}
+
 let tokenStore = {
-  accessToken: null,
-  refreshToken: null,
-  expiresAt: null,
-  state: null, // For CSRF protection
+  ...loadTokens(),
+  state: null, // For CSRF protection (not persisted)
 };
+
+// Log token status on startup
+if (tokenStore.accessToken) {
+  console.log('✅ Loaded Spotify tokens from file');
+  console.log(`   Token expires at: ${new Date(tokenStore.expiresAt).toISOString()}`);
+} else {
+  console.log('ℹ️  No Spotify tokens found. User needs to authenticate.');
+}
 
 // Read Spotify credentials from environment variables
 // These MUST be set in server/.env file
@@ -59,6 +99,7 @@ const SCOPES = [
   'user-read-currently-playing',
   'user-read-playback-state',
   'user-top-read',
+  'user-read-recently-played',
 ].join(' ');
 
 /**
@@ -88,6 +129,11 @@ app.get('/auth/login', (req, res) => {
   authUrl.searchParams.append('scope', SCOPES);
   authUrl.searchParams.append('redirect_uri', SPOTIFY_REDIRECT_URI);
   authUrl.searchParams.append('state', state);
+
+  // Debug: Log the redirect URI being used (for troubleshooting)
+  console.log('🔐 Spotify Auth - Redirect URI:', SPOTIFY_REDIRECT_URI);
+  console.log('🔐 Spotify Auth - Client ID:', SPOTIFY_CLIENT_ID);
+  console.log('🔐 Spotify Auth - Full URL:', authUrl.toString());
 
   res.redirect(authUrl.toString());
 });
@@ -145,16 +191,17 @@ app.get('/auth/callback', async (req, res) => {
 
     const tokenData = await tokenResponse.json();
 
-    // Store tokens server-side
+    // Store tokens server-side and persist to file
     tokenStore = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
       expiresAt: Date.now() + (tokenData.expires_in * 1000),
+      state: tokenStore.state, // Keep state
     };
+    saveTokens(tokenStore);
 
-    // Redirect back to frontend Now page after successful auth
-    // Frontend is at FRONTEND_URL, using hash router with /p183/#/now
-    res.redirect(`${FRONTEND_URL}/p183/#/now?auth=success`);
+    // Redirect back to frontend Home page after successful auth
+    res.redirect(`${FRONTEND_URL}/p183/#/?auth=success`);
   } catch (error) {
     console.error('Callback error:', error);
     res.redirect(`${FRONTEND_URL}/p183/#/now?error=server_error`);
@@ -197,7 +244,7 @@ app.get('/spotify/now-playing', async (req, res) => {
 
 /**
  * GET /spotify/top-tracks
- * Returns top tracks (medium-term, limit 10)
+ * Returns top tracks (short_term for "this month", limit 5)
  */
 app.get('/spotify/top-tracks', async (req, res) => {
   try {
@@ -206,8 +253,8 @@ app.get('/spotify/top-tracks', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const timeRange = req.query.time_range || 'medium_term';
-    const limit = req.query.limit || 10;
+    const timeRange = req.query.time_range || 'short_term'; // short_term = last 4 weeks
+    const limit = req.query.limit || 5;
 
     const response = await fetch(
       `${SPOTIFY_API_BASE}/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
@@ -236,14 +283,134 @@ app.get('/spotify/top-tracks', async (req, res) => {
 });
 
 /**
+ * GET /spotify/recently-played
+ * Returns recently played tracks (limit 1 for last played)
+ */
+app.get('/spotify/recently-played', async (req, res) => {
+  try {
+    const token = await getValidToken();
+    if (!token) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const limit = req.query.limit || 1;
+
+    const response = await fetch(
+      `${SPOTIFY_API_BASE}/me/player/recently-played?limit=${limit}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Spotify API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Recently played error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /auth/status
  * Returns authentication status
+ * Also attempts to refresh token if expired (but refresh token exists)
  */
-app.get('/auth/status', (req, res) => {
+app.get('/auth/status', async (req, res) => {
+  // Try to get a valid token (will refresh if needed)
+  const token = await getValidToken();
+  
   res.json({
-    authenticated: !!tokenStore.accessToken,
+    authenticated: !!token,
     expiresAt: tokenStore.expiresAt,
+    hasRefreshToken: !!tokenStore.refreshToken,
+    hasAccessToken: !!tokenStore.accessToken,
   });
+});
+
+/**
+ * GET /auth/debug
+ * Debug endpoint to check redirect URI configuration
+ */
+app.get('/auth/debug', (req, res) => {
+  res.json({
+    redirectUri: SPOTIFY_REDIRECT_URI,
+    clientId: SPOTIFY_CLIENT_ID ? 'SET' : 'NOT SET',
+    clientSecret: SPOTIFY_CLIENT_SECRET ? 'SET' : 'NOT SET',
+    hasTokens: !!tokenStore.accessToken,
+    message: `Make sure this exact redirect URI is in your Spotify Dashboard: ${SPOTIFY_REDIRECT_URI}`
+  });
+});
+
+/**
+ * POST /contact/send
+ * Sends contact form email to spotnuru@wisc.edu
+ * 
+ * Currently logs to console. To enable actual email sending:
+ * 1. Install nodemailer: npm install nodemailer
+ * 2. Configure email service in .env (see EMAIL_SETUP.md)
+ * 3. Uncomment and configure the email sending code below
+ */
+app.post('/contact/send', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const recipientEmail = 'spotnuru@wisc.edu';
+    
+    // Log the submission (for development)
+    console.log('📧 Contact Form Submission:');
+    console.log(`From: ${name} <${email}>`);
+    console.log(`To: ${recipientEmail}`);
+    console.log(`Message: ${message}`);
+    console.log(`Timestamp: ${new Date().toISOString()}`);
+    console.log('---');
+
+    // TODO: Uncomment and configure email service
+    // Example with nodemailer:
+    /*
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"${name}" <${email}>`,
+      to: recipientEmail,
+      replyTo: email,
+      subject: `Contact Form: Message from ${name}`,
+      text: message,
+      html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
+    });
+    */
+
+    res.json({ 
+      success: true, 
+      message: 'Message received! I\'ll get back to you soon.',
+    });
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({ error: 'Failed to send message. Please try again later.' });
+  }
 });
 
 /**
@@ -255,7 +422,9 @@ app.post('/auth/logout', (req, res) => {
     accessToken: null,
     refreshToken: null,
     expiresAt: null,
+    state: null,
   };
+  saveTokens(tokenStore);
   res.json({ success: true });
 });
 
@@ -302,13 +471,18 @@ async function getValidToken() {
       if (tokenData.refresh_token) {
         tokenStore.refreshToken = tokenData.refresh_token;
       }
+      
+      // Save refreshed tokens to file
+      saveTokens(tokenStore);
     } catch (error) {
       console.error('Token refresh error:', error);
       tokenStore = {
         accessToken: null,
         refreshToken: null,
         expiresAt: null,
+        state: tokenStore.state,
       };
+      saveTokens(tokenStore);
       return null;
     }
   }
@@ -329,7 +503,7 @@ function generateRandomString(length) {
 }
 
 app.listen(PORT, () => {
-  console.log(`Spotify backend server running on http://localhost:${PORT}`);
+  console.log(`\n🚀 Spotify backend server running on http://localhost:${PORT}`);
   
   // Check if credentials are configured
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
@@ -341,6 +515,24 @@ app.listen(PORT, () => {
     console.warn('See server/.env.example for reference\n');
   } else {
     console.log('✅ Spotify credentials loaded from environment');
+    console.log(`   Redirect URI: ${SPOTIFY_REDIRECT_URI}`);
+    console.log(`   ⚠️  Make sure this EXACT URI is in your Spotify Dashboard!`);
   }
+  
+  // Log token status
+  if (tokenStore.accessToken) {
+    const expiresAt = new Date(tokenStore.expiresAt);
+    const isExpired = Date.now() >= tokenStore.expiresAt;
+    console.log(`\n📝 Token Status:`);
+    console.log(`   ${isExpired ? '❌ Token expired' : '✅ Token valid'}`);
+    console.log(`   Expires: ${expiresAt.toISOString()}`);
+    if (tokenStore.refreshToken) {
+      console.log(`   ✅ Refresh token available`);
+    }
+  } else {
+    console.log(`\n📝 Token Status: No tokens found - user needs to authenticate`);
+    console.log(`   Visit: http://localhost:${PORT}/auth/login to start`);
+  }
+  console.log('');
 });
 

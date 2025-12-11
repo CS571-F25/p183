@@ -3,6 +3,9 @@ import { Container } from "react-bootstrap";
 import ProjectCard from "./ProjectCard.jsx";
 import RoleFilter from "./RoleFilter.jsx";
 import reactLogo from "../assets/react.svg";
+// Import WCV project screenshots - using URL constructor for files with spaces
+const wcvScreenshot1 = new URL("../assets/Screenshot 2025-12-11 at 12.59.34 AM.png", import.meta.url).href;
+const wcvScreenshot2 = new URL("../assets/Screenshot 2025-12-11 at 12.59.45 AM.png", import.meta.url).href;
 
 /**
  * Work items with role focus tags
@@ -17,8 +20,8 @@ const workItems = [
       "Led a small cohort working with Wisconsin Conservation Voices to design a digital tool that helps residents learn about climate policy and track small behavior changes. Coordinated usability research, synthesized interview insights, and helped design Figma prototypes for a behavior-change dashboard and resource hub.",
     tags: ["UI/UX", "HCI", "Team Project"],
     roleFocus: ["ui-ux"],
-    imageSrc: reactLogo,
-    imageAlt: "Wisconsin Conservation Voices voter engagement platform",
+    imageSrc: [wcvScreenshot1, wcvScreenshot2],
+    imageAlt: ["Wisconsin Conservation Voices voter engagement platform homepage", "Wisconsin Conservation Voices voting information page"],
     externalLink: "https://example.org/wcv-slides",
   },
   {

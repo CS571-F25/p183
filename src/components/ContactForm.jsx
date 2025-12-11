@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Form, Button, Container } from 'react-bootstrap';
 import FormField from './FormField.jsx';
 import SuccessMessage from './SuccessMessage.jsx';
+import { API_ENDPOINTS } from '../config/backendConfig.js';
 
 /**
  * ContactForm - Interactive contact form with real-time validation
@@ -22,6 +23,8 @@ export default function ContactForm() {
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [submittedMessages, setSubmittedMessages] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // Validation functions
   const validateName = (name) => {
@@ -83,7 +86,7 @@ export default function ContactForm() {
     setTouched((prev) => ({ ...prev, [fieldName]: true }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Mark all fields as touched
@@ -103,39 +106,52 @@ export default function ContactForm() {
       return;
     }
 
-    // Simulate form submission (store in localStorage for demo)
-    const submission = {
-      ...formData,
-      timestamp: new Date().toISOString(),
-    };
-    
-    const existing = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
-    existing.push(submission);
-    localStorage.setItem('contactSubmissions', JSON.stringify(existing));
-    setSubmittedMessages(existing);
+    setIsSubmitting(true);
+    setSubmitError(null);
 
-    // Show success message
-    setShowSuccess(true);
+    try {
+      // Send to backend endpoint
+      const response = await fetch(API_ENDPOINTS.contact, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      message: '',
-    });
-    setTouched({
-      name: false,
-      email: false,
-      message: false,
-    });
-
-    // Scroll to success message
-    setTimeout(() => {
-      const successElement = document.querySelector('[role="alert"]');
-      if (successElement) {
-        successElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
-    }, 100);
+
+      // Show success message
+      setShowSuccess(true);
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        message: '',
+      });
+      setTouched({
+        name: false,
+        email: false,
+        message: false,
+      });
+
+      // Scroll to success message
+      setTimeout(() => {
+        const successElement = document.querySelector('[role="alert"]');
+        if (successElement) {
+          successElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Contact form submission error:', error);
+      setSubmitError(error.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = () => {
@@ -200,11 +216,16 @@ export default function ContactForm() {
         <Button
           variant="primary"
           type="submit"
-          disabled={!isFormValid()}
+          disabled={!isFormValid() || isSubmitting}
           aria-describedby="submit-help"
         >
-          Send Message
+          {isSubmitting ? 'Sending...' : 'Send Message'}
         </Button>
+        {submitError && (
+          <div className="alert alert-danger mt-3" role="alert">
+            {submitError}
+          </div>
+        )}
         <div id="submit-help" className="visually-hidden">
           {isFormValid()
             ? 'Form is valid and ready to submit'

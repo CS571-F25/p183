@@ -100,7 +100,7 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  display: block;
+  display: block; 
   background-color: var(--color-bg);
   color: var(--color-text);
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -240,6 +240,30 @@ button:focus-visible {
   height: 160px;
   object-fit: cover;
   display: block;
+}
+
+.project-card-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.project-card-image-gallery .project-card-image {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: auto;
+  min-height: 200px;
+  max-height: 400px;
+  object-fit: contain;
+  background-color: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .project-card-image-gallery {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 }
 
 [data-theme="dark"] .form-control {
@@ -465,12 +489,24 @@ button:focus-visible {
   height: 280px;
 }
 
-/* Home hero avatar - larger size, maintain circle on all screens */
-.home-avatar.avatar-large {
-  width: 280px;
-  height: 280px;
-  max-width: 60%;
-  aspect-ratio: 1 / 1; /* Force perfect circle even with max-width */
+/* Profile avatar - perfect circle styling for Home and About */
+.avatar.profile-avatar {
+  width: 280px !important;
+  height: 280px !important;
+  aspect-ratio: 1 / 1 !important;
+  flex-shrink: 0;
+  min-width: 280px;
+  min-height: 280px;
+}
+
+/* Home hero avatar - maintain circle on all screens, bigger size */
+.home-avatar.avatar-large,
+.home-avatar.profile-avatar {
+  width: 280px !important;
+  height: 280px !important;
+  aspect-ratio: 1 / 1 !important;
+  min-width: 280px;
+  min-height: 280px;
 }
 
 .avatar-border {
@@ -491,6 +527,15 @@ button:focus-visible {
   object-position: center;
   border-radius: 50%;
   display: block;
+}
+
+/* Ensure profile avatars maintain perfect circle */
+.profile-avatar.avatar-image,
+.avatar.profile-avatar .avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .avatar-placeholder {
@@ -517,27 +562,95 @@ button:focus-visible {
   border-top-color: var(--color-border-subtle) !important;
 }
 
-.social-link {
-  color: var(--text-secondary);
+/* Social buttons in hero section - styled like the image with icons and text */
+.social-link-hero,
+.social-link-nav {
+  color: white;
   text-decoration: none;
-  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 0.95rem;
+}
+
+/* GitHub button - dark gray */
+.social-link-hero[aria-label*="GitHub"],
+.social-link-nav[aria-label*="GitHub"] {
+  background-color: #24292e;
+  color: white;
+}
+
+.social-link-hero[aria-label*="GitHub"]:hover,
+.social-link-nav[aria-label*="GitHub"]:hover {
+  background-color: #1a1e22;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(36, 41, 46, 0.3);
+}
+
+/* LinkedIn button - blue */
+.social-link-hero[aria-label*="LinkedIn"],
+.social-link-nav[aria-label*="LinkedIn"] {
+  background-color: #0077b5;
+  color: white;
+}
+
+.social-link-hero[aria-label*="LinkedIn"]:hover,
+.social-link-nav[aria-label*="LinkedIn"]:hover {
+  background-color: #005885;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 119, 181, 0.3);
+}
+
+/* Resume button - mint green */
+.social-link-hero[aria-label*="Resume"],
+.social-link-hero[aria-label*="resume"],
+.social-link-nav[aria-label*="Resume"],
+.social-link-nav[aria-label*="resume"] {
+  background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+  color: #1a1a1a;
+}
+
+.social-link-hero[aria-label*="Resume"]:hover,
+.social-link-hero[aria-label*="resume"]:hover,
+.social-link-nav[aria-label*="Resume"]:hover,
+.social-link-nav[aria-label*="resume"]:hover {
+  background: linear-gradient(135deg, #98d6bf 0%, #ccddb1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 230, 207, 0.3);
+}
+
+.social-link-hero:focus-visible,
+.social-link-nav:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Footer social links - simple icon-only style */
+.social-link-footer {
+  color: var(--text-muted);
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
-.social-link:hover,
-.social-link:focus {
+.social-link-footer:hover,
+.social-link-footer:focus {
   color: var(--link-color);
   transform: scale(1.05);
-  outline: 2px solid var(--link-color);
-  outline-offset: 2px;
 }
 
-.social-link:focus-visible {
+.social-link-footer:focus-visible {
   outline: 2px solid var(--link-color);
   outline-offset: 2px;
 }
@@ -578,51 +691,40 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* Hero section buttons - clean primary + outline styles */
-.btn-hero-primary {
+/* Hero section buttons - rounded blue buttons with white text */
+.btn-hero-primary,
+.btn-hero-outline {
   background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
-  color: white;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
   border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.btn-hero-primary:hover {
-  opacity: 0.9;
-  background-color: #2563eb; /* Slightly darker blue */
+.btn-hero-primary:hover,
+.btn-hero-outline:hover {
+  background-color: #2563eb;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-hero-primary:focus,
-.btn-hero-primary:focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
-}
-
-.btn-hero-primary:active {
-  opacity: 0.85;
-}
-
-.btn-hero-outline {
-  background-color: transparent;
-  border: 1px solid var(--accent-blue);
-  color: var(--accent-blue);
-  transition: all 0.15s ease;
-}
-
-.btn-hero-outline:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-}
-
+.btn-hero-primary:focus-visible,
 .btn-hero-outline:focus,
 .btn-hero-outline:focus-visible {
   outline: 2px solid var(--accent-blue);
   outline-offset: 2px;
 }
 
+.btn-hero-primary:active,
 .btn-hero-outline:active {
-  background-color: rgba(59, 130, 246, 0.15);
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
 .btn-resume {
@@ -810,4 +912,196 @@ button:focus-visible {
   min-width: 50px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Now page styling - Kyan Cox style */
+.now-card {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
+  border-radius: 8px;
+}
+
+.now-card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text);
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+}
+
+/* Education icon wrapper - styled like Kyan's */
+.education-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.uw-crest-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+/* About Me section headings - smaller than h1 */
+.about-section-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.now-education-content {
+  color: var(--color-text);
+}
+
+.now-education-content p {
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.now-education-content p strong {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.now-album-art {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--color-border-subtle);
+}
+
+.now-album-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.now-album-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-border-subtle);
+  color: var(--color-muted-text);
+  font-size: 2rem;
+}
+
+.now-track-link {
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+
+.now-track-link:hover {
+  color: var(--accent-blue);
+}
+
+.now-tracks-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.now-track-row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease;
+  gap: 1rem;
+}
+
+.now-track-row:hover,
+.now-track-row:focus {
+  background-color: rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.now-track-row:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: -2px;
+}
+
+.now-track-row:last-child {
+  border-bottom: none;
+}
+
+.now-track-rank {
+  font-weight: 600;
+  color: var(--color-muted-text);
+  min-width: 30px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.now-track-album-art {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--color-border-subtle);
+}
+
+.now-track-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.now-track-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-border-subtle);
+  color: var(--color-muted-text);
+  font-size: 1rem;
+}
+
+.now-track-info {
+  min-width: 0;
+}
+
+.now-track-name {
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-track-artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-track-album {
+  min-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-track-duration {
+  color: var(--color-muted-text);
+  min-width: 50px;
+  text-align: right;
+  font-size: 0.9rem;
 }
