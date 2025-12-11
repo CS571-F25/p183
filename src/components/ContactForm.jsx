@@ -110,14 +110,20 @@ export default function ContactForm() {
     setSubmitError(null);
 
     try {
-      // Send to backend endpoint
+      // Send to backend endpoint with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(API_ENDPOINTS.contact, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -148,7 +154,11 @@ export default function ContactForm() {
       }, 100);
     } catch (error) {
       console.error('Contact form submission error:', error);
-      setSubmitError(error.message || 'Failed to send message. Please try again.');
+      if (error.name === 'AbortError') {
+        setSubmitError('Request timed out. The message was received but email delivery may be delayed. Please try again if needed.');
+      } else {
+        setSubmitError(error.message || 'Failed to send message. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

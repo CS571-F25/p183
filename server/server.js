@@ -436,7 +436,8 @@ app.post('/contact/send', async (req, res) => {
           socketTimeout: 10000,
         });
 
-        await transporter.sendMail({
+        // Send email with timeout
+        const emailPromise = transporter.sendMail({
           from: `"${name}" <${process.env.EMAIL_USER}>`,
           to: recipientEmail,
           replyTo: email,
@@ -444,7 +445,14 @@ app.post('/contact/send', async (req, res) => {
           text: message,
           html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
         });
-        console.log('✅ Email sent successfully');
+        
+        // Don't wait for email - respond immediately to user
+        emailPromise
+          .then(() => console.log('✅ Email sent successfully'))
+          .catch((emailErr) => console.error('❌ Email sending failed:', emailErr));
+        
+        // Return success immediately (email will send in background)
+        console.log('✅ Form submission received, email queued');
       } catch (emailError) {
         console.error('❌ Email sending failed:', emailError);
         // Don't fail the request if email fails - still log to console
