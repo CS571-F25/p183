@@ -140,21 +140,24 @@ export function useSpotify() {
       if (response.ok) {
         const data = await response.json();
         setIsAuthenticated(data.authenticated);
-        if (data.authenticated) {
-          // Fetch data if authenticated
-          await fetchSpotifyData();
-        } else {
-          // Not authenticated - try to auto-login if we have tokens stored
-          // The backend will handle token refresh if needed
-          setIsLoading(false);
-        }
+        
+        // Always try to fetch data - backend will handle token refresh if needed
+        // This makes it work for visitors even if status check fails temporarily
+        await fetchSpotifyData();
+        
+        // Only set loading to false after attempting to fetch
+        setIsLoading(false);
       } else {
+        // Status check failed, but still try to fetch data (backend might have tokens)
         setIsAuthenticated(false);
+        await fetchSpotifyData();
         setIsLoading(false);
       }
     } catch (err) {
       console.error('Error checking auth status:', err);
+      // Even on error, try to fetch data (backend might be sleeping but will wake up)
       setIsAuthenticated(false);
+      await fetchSpotifyData();
       setIsLoading(false);
     }
   }, [fetchSpotifyData]);
@@ -167,21 +170,18 @@ export function useSpotify() {
   }, [isAuthenticated, fetchSpotifyData]);
 
   // Auto-refresh Spotify data every minute (60 seconds)
+  // Keep trying even if not authenticated - backend might have tokens that need refresh
   useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
     // Set up interval to refresh data every 60 seconds
     const intervalId = setInterval(() => {
       fetchSpotifyData();
     }, 60000); // 60000ms = 60 seconds = 1 minute
 
-    // Cleanup interval on unmount or when auth status changes
+    // Cleanup interval on unmount
     return () => {
       clearInterval(intervalId);
     };
-  }, [isAuthenticated, fetchSpotifyData]);
+  }, [fetchSpotifyData]);
 
   const handleLogin = useCallback(() => {
     // Redirect to backend login endpoint
