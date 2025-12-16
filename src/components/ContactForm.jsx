@@ -114,6 +114,9 @@ export default function ContactForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
+      console.log('Submitting to:', API_ENDPOINTS.contact);
+      console.log('Form data:', formData);
+      
       const response = await fetch(API_ENDPOINTS.contact, {
         method: 'POST',
         headers: {
@@ -125,13 +128,26 @@ export default function ContactForm() {
       
       clearTimeout(timeoutId);
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          const text = await response.text();
+          throw new Error(`Server error (${response.status}): ${text || 'Unknown error'}`);
+        }
         throw new Error(errorData.error || 'Failed to send message');
       }
 
+      const result = await response.json();
+      console.log('Success response:', result);
+
       // Show success message
       setShowSuccess(true);
+      setSubmitError(null);
 
       // Reset form
       setFormData({
@@ -154,8 +170,15 @@ export default function ContactForm() {
       }, 100);
     } catch (error) {
       console.error('Contact form submission error:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
       if (error.name === 'AbortError') {
         setSubmitError('Request timed out. The message was received but email delivery may be delayed. Please try again if needed.');
+      } else if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        setSubmitError('Network error: Could not connect to server. Please check your connection and try again.');
       } else {
         setSubmitError(error.message || 'Failed to send message. Please try again.');
       }
