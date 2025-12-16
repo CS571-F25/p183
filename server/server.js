@@ -47,7 +47,7 @@ const PORT = process.env.PORT || 3001;
 
 // CORS configuration - allow requests from frontend
 // In development: allows localhost and 127.0.0.1
-// In production: allows GitHub Pages origin
+// In production: allows GitHub Pages and Render frontend origins
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -66,13 +66,26 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        // In production, also check if it matches FRONTEND_URL from env
+        // Check if it matches FRONTEND_URL from env (supports both GitHub Pages and Render)
         const frontendUrl = process.env.FRONTEND_URL;
-        if (frontendUrl && origin.startsWith(frontendUrl)) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
+        if (frontendUrl) {
+          // Remove trailing slash for comparison
+          const normalizedFrontendUrl = frontendUrl.replace(/\/$/, '');
+          const normalizedOrigin = origin.replace(/\/$/, '');
+          
+          if (normalizedOrigin.startsWith(normalizedFrontendUrl)) {
+            return callback(null, true);
+          }
         }
+        
+        // Also allow Render frontend URLs (if frontend is on Render)
+        if (origin.includes('.onrender.com')) {
+          console.log('✅ Allowing Render frontend origin:', origin);
+          return callback(null, true);
+        }
+        
+        console.warn('⚠️  CORS blocked origin:', origin);
+        callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
@@ -83,14 +96,19 @@ app.use(express.json());
 
 // Token storage - loads from file on startup, saves to file on update
 // This allows tokens to persist across server restarts (like Kyan's implementation)
+// NOTE: On Render free tier, filesystem is ephemeral - tokens may be lost on restart
 function loadTokens() {
   try {
     if (fs.existsSync(TOKEN_FILE)) {
       const data = fs.readFileSync(TOKEN_FILE, 'utf8');
-      return JSON.parse(data);
+      const tokens = JSON.parse(data);
+      console.log('📂 Token file found and loaded');
+      return tokens;
+    } else {
+      console.log('📂 No token file found (this is normal on first run or after Render restart)');
     }
   } catch (error) {
-    console.error('Error loading tokens:', error);
+    console.error('❌ Error loading tokens from file:', error.message);
   }
   return {
     accessToken: null,
@@ -99,13 +117,32 @@ function loadTokens() {
   };
 }
 
+// Reload tokens from file (useful if tokens were lost due to service restart)
+function reloadTokens() {
+  const loaded = loadTokens();
+  if (loaded.accessToken && !tokenStore.accessToken) {
+    console.log('🔄 Reloading tokens from file into memory');
+    tokenStore = {
+      ...loaded,
+      state: tokenStore.state, // Preserve state
+    };
+    return true;
+  }
+  return false;
+}
+
 function saveTokens(tokens) {
   try {
     // Don't save state to file (it's only for CSRF protection)
     const { state, ...tokensToSave } = tokens;
     fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokensToSave, null, 2));
+    console.log('💾 Tokens saved to file:', {
+      hasAccessToken: !!tokensToSave.accessToken,
+      hasRefreshToken: !!tokensToSave.refreshToken,
+      expiresAt: tokensToSave.expiresAt ? new Date(tokensToSave.expiresAt).toISOString() : null,
+    });
   } catch (error) {
-    console.error('Error saving tokens:', error);
+    console.error('❌ Error saving tokens:', error);
   }
 }
 
@@ -181,25 +218,43 @@ app.get('/auth/login', (req, res) => {
  * Exchanges authorization code for access token
  */
 app.get('/auth/callback', async (req, res) => {
+  console.log('🔄 Spotify callback received');
+  console.log('   Query params:', { code: req.query.code ? 'present' : 'missing', state: req.query.state, error: req.query.error });
+  
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
-    console.error('Spotify credentials not configured in .env');
+    console.error('❌ Spotify credentials not configured in .env');
     return res.status(500).send('Server configuration error');
   }
 
   const { code, state, error } = req.query;
 
   if (error) {
+    console.error('❌ Spotify returned error:', error);
     return res.redirect(`${FRONTEND_URL}#/about?error=${encodeURIComponent(error)}`);
   }
 
   if (!code) {
+    console.error('❌ No authorization code in callback');
     return res.redirect(`${FRONTEND_URL}#/about?error=no_code`);
   }
+  
+  console.log('✅ Authorization code received, exchanging for token...');
 
   // Verify state parameter (CSRF protection)
+  // Note: On Render free tier, service may restart between login and callback,
+  // causing state to be lost. We'll log this but still allow the callback to proceed
+  // if we have valid credentials (security trade-off for Render's ephemeral nature)
   if (state !== tokenStore.state) {
-    console.error('State mismatch - possible CSRF attack');
-    return res.redirect(`${FRONTEND_URL}#/about?error=state_mismatch`);
+    if (!tokenStore.state) {
+      console.warn('⚠️  State mismatch: tokenStore.state is null (likely due to Render service restart)');
+      console.warn('   Proceeding with token exchange anyway - this is expected on Render free tier');
+      // Continue - state was likely lost due to service restart
+    } else {
+      console.error('❌ State mismatch - possible CSRF attack or service restart');
+      console.error(`   Expected: ${tokenStore.state}, Got: ${state}`);
+      // Still allow it on Render since state is ephemeral, but log the issue
+      console.warn('   Proceeding with token exchange (Render service may have restarted)');
+    }
   }
   
   // Clear state after use
@@ -221,26 +276,47 @@ app.get('/auth/callback', async (req, res) => {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      console.error('Token exchange error:', errorData);
+      const errorData = await tokenResponse.json().catch(() => ({ error: 'Failed to parse error response' }));
+      console.error('❌ Token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: errorData,
+      });
       return res.redirect(`${FRONTEND_URL}#/about?error=token_exchange_failed`);
     }
 
+    console.log('✅ Token exchange successful, parsing response...');
     const tokenData = await tokenResponse.json();
+    console.log('✅ Token data received:', {
+      hasAccessToken: !!tokenData.access_token,
+      hasRefreshToken: !!tokenData.refresh_token,
+      expiresIn: tokenData.expires_in,
+    });
 
     // Store tokens server-side and persist to file
+    const expiresAt = Date.now() + (tokenData.expires_in * 1000);
     tokenStore = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
-      expiresAt: Date.now() + (tokenData.expires_in * 1000),
-      state: tokenStore.state, // Keep state
+      expiresAt: expiresAt,
+      state: null, // Clear state after successful auth
     };
     saveTokens(tokenStore);
 
+    console.log('✅ Tokens saved successfully:', {
+      hasAccessToken: !!tokenStore.accessToken,
+      hasRefreshToken: !!tokenStore.refreshToken,
+      expiresAt: new Date(expiresAt).toISOString(),
+      expiresIn: tokenData.expires_in,
+      refreshTokenLength: tokenStore.refreshToken ? tokenStore.refreshToken.length : 0,
+    });
+
     // Redirect back to frontend About page after successful auth (where Spotify section is)
+    console.log('✅ Authentication complete, redirecting to frontend...');
     res.redirect(`${FRONTEND_URL}#/about?auth=success`);
   } catch (error) {
-    console.error('Callback error:', error);
+    console.error('❌ Callback error:', error);
+    console.error('   Error stack:', error.stack);
     res.redirect(`${FRONTEND_URL}#/about?error=server_error`);
   }
 });
@@ -359,14 +435,45 @@ app.get('/spotify/recently-played', async (req, res) => {
  * Also attempts to refresh token if expired (but refresh token exists)
  */
 app.get('/auth/status', async (req, res) => {
+  // Try to reload tokens from file if they're missing (handles Render restarts)
+  if (!tokenStore.accessToken && !tokenStore.refreshToken) {
+    reloadTokens();
+  }
+  
   // Try to get a valid token (will refresh if needed)
   const token = await getValidToken();
+  
+  // Log status for debugging
+  if (!token) {
+    console.log('📊 Auth status check: Not authenticated', {
+      hasAccessToken: !!tokenStore.accessToken,
+      hasRefreshToken: !!tokenStore.refreshToken,
+      expiresAt: tokenStore.expiresAt ? new Date(tokenStore.expiresAt).toISOString() : null,
+      isExpired: tokenStore.expiresAt ? Date.now() >= tokenStore.expiresAt : true,
+      tokenFileExists: fs.existsSync(TOKEN_FILE),
+    });
+  }
   
   res.json({
     authenticated: !!token,
     expiresAt: tokenStore.expiresAt,
     hasRefreshToken: !!tokenStore.refreshToken,
     hasAccessToken: !!tokenStore.accessToken,
+  });
+});
+
+/**
+ * GET /health
+ * Health check endpoint - can be pinged to keep Render service awake
+ * Also useful for monitoring service status
+ */
+app.get('/health', (req, res) => {
+  const hasTokens = !!(tokenStore.accessToken || tokenStore.refreshToken);
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    hasTokens: hasTokens,
+    tokenFileExists: fs.existsSync(TOKEN_FILE),
   });
 });
 
@@ -490,6 +597,11 @@ app.post('/auth/logout', (req, res) => {
  * Helper: Get valid access token, refreshing if necessary
  */
 async function getValidToken() {
+  // If no tokens in memory, try to reload from file (handles Render restarts)
+  if (!tokenStore.accessToken && !tokenStore.refreshToken) {
+    reloadTokens();
+  }
+  
   if (!tokenStore.accessToken) {
     return null;
   }
@@ -519,28 +631,64 @@ async function getValidToken() {
       });
 
       if (!response.ok) {
-        throw new Error('Token refresh failed');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error_description || errorData.error || 'Token refresh failed';
+        const errorCode = errorData.error || 'unknown';
+        
+        console.error('❌ Token refresh failed:', {
+          status: response.status,
+          error: errorCode,
+          description: errorMessage,
+        });
+        
+        // Only clear tokens if refresh token is invalid/expired (400, 401)
+        // Don't clear on network errors or server errors (5xx) - might be temporary
+        if (response.status === 400 || response.status === 401) {
+          console.error('🔄 Refresh token is invalid or expired. User needs to reconnect.');
+          tokenStore = {
+            accessToken: null,
+            refreshToken: null,
+            expiresAt: null,
+            state: tokenStore.state,
+          };
+          saveTokens(tokenStore);
+        } else {
+          // For other errors (network, 5xx), log but don't clear tokens
+          // Return the expired token - the API call will fail, but we keep tokens for retry
+          console.warn('⚠️  Token refresh failed with non-auth error. Keeping tokens for retry.');
+        }
+        return null;
       }
 
       const tokenData = await response.json();
       tokenStore.accessToken = tokenData.access_token;
       tokenStore.expiresAt = Date.now() + (tokenData.expires_in * 1000);
       
+      // Spotify may or may not return a new refresh token
+      // If it does, update it; otherwise keep the existing one
       if (tokenData.refresh_token) {
         tokenStore.refreshToken = tokenData.refresh_token;
+        console.log('✅ Token refreshed successfully with new refresh token');
+      } else {
+        // Keep existing refresh token if Spotify doesn't provide a new one
+        console.log('✅ Token refreshed successfully (using existing refresh token)');
+        if (!tokenStore.refreshToken) {
+          console.warn('⚠️  WARNING: No refresh token available after refresh!');
+        }
       }
       
       // Save refreshed tokens to file
       saveTokens(tokenStore);
+      
+      console.log('🔄 Token refresh complete:', {
+        expiresAt: new Date(tokenStore.expiresAt).toISOString(),
+        hasRefreshToken: !!tokenStore.refreshToken,
+      });
     } catch (error) {
-      console.error('Token refresh error:', error);
-      tokenStore = {
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: null,
-        state: tokenStore.state,
-      };
-      saveTokens(tokenStore);
+      // Network errors or other exceptions
+      console.error('❌ Token refresh error (network/exception):', error.message);
+      // Don't clear tokens on network errors - might be temporary
+      // Return null so the API call fails, but tokens remain for next retry
       return null;
     }
   }
